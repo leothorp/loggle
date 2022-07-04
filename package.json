@@ -1,6 +1,6 @@
 {
   "name": "@leothorp/loggle",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "An easy-to-use, flexible, and tiny logging library for the browser.",
   "type": "module",
   "scripts": {
@@ -19,7 +19,12 @@
   "browser": {
     "./index.js": "./index.browser.js"
   },
-  "keywords": ["logging", "frontend", "log levels", "javascript"],
+  "keywords": [
+    "logging",
+    "frontend",
+    "log levels",
+    "javascript"
+  ],
   "author": "leothorp",
   "repo": "",
   "license": "MIT",
