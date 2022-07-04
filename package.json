@@ -21,12 +21,13 @@
   },
   "keywords": [
     "logging",
-    "frontend",
+    "frontend logs",
     "log levels",
-    "javascript"
+    "log sink"
   ],
+  "files": ["src/*", "index.browser.js", "index.js", "README.md"],
   "author": "leothorp",
-  "repo": "",
+  "repo": "https://github.com/leothorp/loggle",
   "license": "MIT",
   "devDependencies": {
     "webpack": "^5.73.0",
