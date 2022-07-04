@@ -1,10 +1,11 @@
 {
-  "name": "simple-browser-logger",
+  "name": "@leothorp/loggle",
   "version": "0.0.1",
   "description": "",
   "type": "module",
   "scripts": {
-    "test": "node tests/run.js"
+    "test": "node tests/run.js",
+    "build": "npx webpack --config webpack.config.js"
   },
   "engines": {
     "node": "^14 || ^16 || >=18"
@@ -19,15 +20,10 @@
     "./index.js": "./index.browser.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "leothorp",
   "repo": "",
   "license": "MIT",
   "devDependencies": {
-
-  },
-  "dependencies": {
-  },
-  "bin": {
-    "simple-browser-logger": "./bin/main.js"
+    "webpack-cli": "^4.10.0"
   }
 }
