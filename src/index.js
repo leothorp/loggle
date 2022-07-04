@@ -36,9 +36,13 @@ const defaultConfig = {
     endpoint: null, //string URL of an endpoint the logger will POST logs to, if present.
     func: ({ message, metaProperties }) => console.log(message, metaProperties), //function to pass each log to.
   },
-  metadata: {
-    properties: {}, //obj, or function that returns an obj, of arbitrary additional key/value pairs to include
+  metadataConfig: {
+    //obj of arbitrary additional key/value pairs to include
     includeInMessageString: false, //whether to tack metadata.properties onto end of message string logged, or only include as additional param to sink endpoints/functions
+  },
+  localOverrideKeys: {
+    config: "config",
+    metadata: "metadata",
   },
 
   //TODO(lt): filter via regex
@@ -92,14 +96,37 @@ const getPrefixSegments = (levelName, config) => {
  * log.info('msg part 1', 'part 2')
  *
  */
+const DEFAULT_LOCAL_OVERRIDE_KEYS = {
+  config: "config",
+  metadata: "metadata",
+};
+const isLocalOverrideObj = (obj, globalConfig) => {
+  //in case they wiped out this property with their own config
+  const localOverrideKeys =
+    globalConfig.localOverrideKeys || DEFAULT_LOCAL_OVERRIDE_KEYS;
+  const keys = Object.keys(obj);
+  return (
+    keys.length > 0 &&
+    keys.length <= 2 &&
+    keys.every((k) => localOverrideKeys.hasOwnProperty(k))
+  );
+};
 
-const createLogger = (inputConfig = defaultConfig) => {
+const createLogger = ({
+  config: inputConfig = defaultConfig,
+  metadata: globalMetadata = {},
+}) => {
   const globalConfig = mergeConfigs(defaultConfig, inputConfig);
-  const makeLogger =
+  const makeLevelLogger =
     (levelName, intVal) =>
     (...baseLogArgs) => {
       //TODO(lt): vvv how differentiate another obj they want to send?
-      const hasAdditionalConfig = isPlainConfigObj(baseLogArgs[0]);
+      const hasAdditionalConfigOrMetadata = isLocalOverrideObj(
+        baseLogArgs[0],
+        globalConfig
+      );
+      const hasAdditionalConfig = !!baseLogArgs[0].config;
+      const hasAdditionalMetadata = !!baseLogArgs[0].metadata;
       const config = hasAdditionalConfig
         ? mergeConfigs(globalConfig, baseLogArgs[0])
         : globalConfig;
@@ -109,15 +136,14 @@ const createLogger = (inputConfig = defaultConfig) => {
         return;
       }
 
-      const meta =
-        typeof config.metadata.properties === "function"
-          ? config.metadata.properties()
-          : config.metadata.properties;
+      const meta = hasAdditionalMetadata
+        ? mergeConfigs(globalMetadata, baseLogArgs[0].metadata)
+        : globalMetadata;
 
       const allLogSegments = [
         ...getPrefixSegments(levelName, config),
         ...logArgs,
-        config.metadata.includeInMessageString && meta,
+        config.metadataConfig.includeInMessageString && meta,
       ].filter((x) => x);
 
       const message = formatLogSegments(...allLogSegments);
@@ -129,7 +155,20 @@ const createLogger = (inputConfig = defaultConfig) => {
         post(config.sink.endpoint, { message, meta });
       }
     };
-  return mapObj(levels, (name, intValue) => [name, makeLogger(name, intValue)]);
+  const levelLoggers = mapObj(levels, (name, intValue) => [
+    name,
+    makeLevelLogger(name, intValue),
+  ]);
+
+  return {
+    ...levelLoggers,
+    createSubLogger: ({ config: subConfig, metadata: subMetadata }) => {
+      return createLogger({
+        config: mergeConfigs(globalConfig, subConfig),
+        metadata: mergeConfigs(globalMetadata, subMetadata),
+      });
+    },
+  };
 };
 
 export { createLogger, LOG_LEVELS };
