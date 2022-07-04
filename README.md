@@ -9,7 +9,7 @@
 - standard set of log levels, with configurable message prefixes and colors
 - include arbitrary metadata/tags with logs
 - extend configuration via subloggers
-- tiny, no external dependencies (~1kb minified + gzipped)
+- ~1kb minified + gzipped, no external dependencies
 
 ### Installation
 
