@@ -35,7 +35,7 @@ const defaultConfig = {
   },
   sink: {
     endpoint: null, //string URL of an endpoint the logger will POST logs to, if present.
-    func: ({ message, metaProperties }) => console.log(message, metaProperties), //function to pass each log to.
+    func: ({ message, metadata }) => console.log(message, metaProperties), //function to pass each log to.
   },
   metadataConfig: {
     //obj of arbitrary additional key/value pairs to include
@@ -48,7 +48,7 @@ const defaultConfig = {
 
   //TODO(lt): filter via regex
 
-  filter: ({ message, meta }) => true, //function for filtering logs based on message content/metadata
+  filter: ({ message, metadata }) => true, //function for filtering logs based on message content/metadata
 
   //TODO: batch option for sending
 };
@@ -101,35 +101,44 @@ const DEFAULT_LOCAL_OVERRIDE_KEYS = {
   config: "config",
   metadata: "metadata",
 };
-const isLocalOverrideObj = (obj, globalConfig) => {
+const getLocalOverrides = (obj, globalConfig) => {
   //in case they wiped out this property with their own config
-  const localOverrideKeys =
+  const localOverrideKeyMap =
     globalConfig.localOverrideKeys || DEFAULT_LOCAL_OVERRIDE_KEYS;
   const keys = Object.keys(obj);
-  return (
+  const isLocalOverride =
     keys.length > 0 &&
     keys.length <= 2 &&
-    keys.every((k) => localOverrideKeys.hasOwnProperty(k))
-  );
+    keys.every((k) => localOverrideKeyMap.hasOwnProperty(k));
+
+  if (isLocalOverride) {
+    return mapObj(localOverrideKeyMap, (origKey, mappedKey) => [
+      origKey,
+      obj[mappedKey],
+    ]);
+  } else {
+    return { config: null, metadata: null };
+  }
 };
+
+const defaultMetadata = () => ({ clientTimestamp: Date.now() });
 
 const createLogger = ({
   config: inputConfig = defaultConfig,
-  metadata: globalMetadata = {},
+  metadata: globalMetadata = defaultMetadata,
 }) => {
   const globalConfig = mergeConfigs(defaultConfig, inputConfig);
   const makeLevelLogger =
     (levelName, intVal) =>
     (...baseLogArgs) => {
-      //TODO(lt): vvv how differentiate another obj they want to send?
-      const hasAdditionalConfigOrMetadata = isLocalOverrideObj(
-        baseLogArgs[0],
-        globalConfig
-      );
-      const hasAdditionalConfig = !!baseLogArgs[0].config;
-      const hasAdditionalMetadata = !!baseLogArgs[0].metadata;
+      //TODO(lt): vvv how differentiate another obj they want to send with same keys?
+      //localOverrideKeys is for that.
+      const { config: baseLogConfig, metadata: baseLogMetadata } =
+        getLocalOverrides(baseLogArgs[0], globalConfig);
+      const hasAdditionalConfig = !!baseLogConfig;
+      const hasAdditionalMetadata = !!baseLogMetadata;
       const config = hasAdditionalConfig
-        ? mergeConfigs(globalConfig, baseLogArgs[0])
+        ? mergeConfigs(globalConfig, baseLogConfig)
         : globalConfig;
       const logArgs = hasAdditionalConfig ? baseLogArgs.slice(1) : baseLogArgs;
 
@@ -137,23 +146,23 @@ const createLogger = ({
         return;
       }
 
-      const meta = hasAdditionalMetadata
-        ? mergeConfigs(globalMetadata, baseLogArgs[0].metadata)
+      const metadata = hasAdditionalMetadata
+        ? mergeConfigs(globalMetadata, baseLogMetadata)
         : globalMetadata;
 
       const allLogSegments = [
         ...getPrefixSegments(levelName, config),
         ...logArgs,
-        config.metadataConfig.includeInMessageString && meta,
+        config.metadataConfig.includeInMessageString && metadata,
       ].filter((x) => x);
 
       const message = formatLogSegments(allLogSegments);
-      if (!filter({ message, meta })) {
+      if (!filter({ message, metadata, config })) {
         return;
       }
-      config.sink.func({ message, meta });
+      config.sink.func({ message, metadata, config });
       if (config.sink.endpoint) {
-        post(config.sink.endpoint, { message, meta });
+        post(config.sink.endpoint, { message, metadata, config });
       }
     };
   const levelLoggers = mapObj(levels, (name, intValue) => [
@@ -163,9 +172,6 @@ const createLogger = ({
 
   return {
     ...levelLoggers,
-    //TODO(lt): document
-    //TODO(lt): expand docs in general
-    //TODO(lt): determine bundle size
     createSubLogger: ({ config: subConfig, metadata: subMetadata }) => {
       return createLogger({
         config: mergeConfigs(globalConfig, subConfig),

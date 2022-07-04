@@ -34,12 +34,32 @@ log.info("some info", "more content")
 log.debug("a debug message")
 ```
 
-### Configuration and Metadata
+### Configuration/Metadata
 
-`createLogger` accepts a single optional parameter- an object which can contain
-one or both of `config` and `metadata` as keys. These are described in more detail in their respective sections further down.
+`createLogger` accepts a single optional configuration object as a parameter. This object can contain one or both of `config` and `metadata` as keys. These are described in more detail in their respective sections further down.
 
-On both of these, it's only necessary to include the properties you want to change- any properties left undefined on the parent object (or its sub-objects) will take their default value automatically.
+On both of these objects, it's only necessary to include the properties you want to change- any properties left undefined on the parent object (or its sub-objects) will take their default value automatically.
+
+
+#### `metadata`
+
+`metadata` is either an object, or a function which returns an object, containing arbitrary key/value pairs that you want
+included with every log message (by default, none are included.) It could be an app id,
+a reference to the environment, debugging context, or anything you find useful. It will be sent to your sinks, and can also be included with
+every logged message in the console with the config option `includeInMessageString`
+(see `config` section below.)
+
+Another common use case is to pass tags/categories for filtering and grouping
+messages.
+
+#### `config`
+
+Explanations of these properties and their default values are shown below.
+
+[Docs are WIP at the moment. defaults can be viewed in the defaultConfig variable in src/index.js/]
+
+
+### Extending Log Configuration
 
 Each individual log call (e.g., `log.info()`) can also optionally be
 passed these same `config` and `metadata` options (with the exception of one config option: `localOverrideKeys`). These will be merged with the config/metadata values from the parent createLogger, with values from the individual log call taking precedence in the case of them both specifying a particular key.
@@ -54,7 +74,7 @@ const log = createLogger({prefix: {formatLogSegments: segments => segments.join(
 const subLog = log.createSubLogger({prefix: {includeLevelName: false, getCurrentTimeString: Date.now}})
 
 /*
-The below will have the same result output as fir a single config containing
+The below will have the same result output as if there were a single parent config containing
 {
   prefix: {
     formatLogSegments: (segments) => segments.join(" || "),
@@ -72,20 +92,3 @@ To sum it up, the overall precedence order for any specified config/metadata is:
 2. parent createSubLogger
 3. parent createLogger
 4. library defaults
-
-#### `metadata`
-
-`metadata` is an object of arbitrary key/value pairs that you want
-included with every log message. It could be an app id,
-a reference to the environment, debugging context, or anything you find useful. It will be sent to your sinks, and can also be included with
-every logged message in the console with the config option `includeInMessageString`
-(see `config` section below.)
-
-Another common use case is to pass an array of tags for filtering/categorizing
-messages.
-
-#### `config`
-
-Explanations of these properties and their default values are shown below
-
-[Docs are WIP at the moment. defaults can be viewed in the defaultConfig variable in src/index.js/]
