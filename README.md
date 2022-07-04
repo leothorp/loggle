@@ -8,16 +8,19 @@
 - `sink` options - pass an endpoint URL (or a JS function) to send logs to
 - standard set of log levels, with configurable message prefixes and colors
 - include arbitrary metadata/tags with logs
-- centralized filtering via function (particularly helpful for debug messages in local dev)
+- extend configuration via subloggers
+- tiny, no external dependencies (~1kb minified + gzipped)
 
 ### Installation
 
 In your project directory:
+
 ```
   npm i @leothorp/loggle
 ```
 
 ### Usage Example
+
 ```
 //TODO(lt): vvv double check this import works
 import {createLogger} from "loggle";
@@ -34,32 +37,53 @@ log.debug("a debug message")
 ### Configuration and Metadata
 
 `createLogger` accepts a single optional parameter- an object which can contain
-one or both of `config` and `metadata` as keys.  You can 
+one or both of `config` and `metadata` as keys. These are described in more detail in their respective sections further down.
+
+On both of these, it's only necessary to include the properties you want to change- any properties left undefined on the parent object (or its sub-objects) will take their default value automatically.
+
+Each individual log call (e.g., `log.info()`) can also optionally be
+passed these same `config` and `metadata` options (with the exception of one config option: `localOverrideKeys`). These will be merged with the config/metadata values from the parent createLogger, with values from the individual log call taking precedence in the case of them both specifying a particular key.
+
+Config/metadata can also be extended with the `createSubLogger` function, as shown in the example below.
+
+```
+import {createLogger} from "loggle";
+
+const log = createLogger({prefix: {formatLogSegments: segments => segments.join(" || "), getCurrentTimeString: () => new Date()}});
+
+const subLog = log.createSubLogger({prefix: {includeLevelName: false, getCurrentTimeString: Date.now}})
+
+/*he below will have the same result output as fir a single config containing
+{
+  prefix: {
+    formatLogSegments: (segments) => segments.join(" || "),
+    includeLevelName: false,
+    getCurrentTimeString: Date.now,
+  },
+};
+*/
+subLog.info("some info");
+```
+
+To sum it up, the overall precedence order for any specified config/metadata is:
+
+1. individual log function call
+2. parent createSubLogger
+3. parent createLogger
+4. library defaults
 
 #### `metadata`
 
-`metadata` is an object of arbitrary key/value pairs that you want 
+`metadata` is an object of arbitrary key/value pairs that you want
 included with every log message. It could be an app id,
 a reference to the environment, debugging context, or anything you find useful. It will be sent to your sinks, and can also be included with
-every logged message in the console with the config option  `includeInMessageString`
-(see `config` section below.) 
+every logged message in the console with the config option `includeInMessageString`
+(see `config` section below.)
 
 Another common use case is to pass an array of tags for filtering/categorizing
-messages. For example:
-
-
-
+messages.
 
 #### `config`
-
-It's only necessary to include the properties you want to change- any properties left undefined on the parent config object (or its subobjects) will take their default value automatically.
-
-Each individual log call (e.g., `log.info()` can also optionally be 
-passed these same config options (with one exception: `localOverrideKeys`). these will override the config from 
-createLogger. The syntax for doing that is different than
-
-
-
 
 Explanations of these properties and their default values are shown below.
 

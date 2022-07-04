@@ -13,6 +13,7 @@ const LOG_LEVELS = {
   debug: 4,
 };
 const defaultConfig = {
+  //globally enable/disable logging
   enabled: true,
   level: DEFAULT_LOG_LEVEL, //suggest setting this via environment variable
   prefix: {
@@ -22,7 +23,7 @@ const defaultConfig = {
     getCurrentTimeString: () =>
       new Date().toLocaleTimeString("en-US", { hour12: false }),
     getRestOfPrefix: () => [],
-    formatLogSegments: (...elements) => elements.join(" "), //formatter for each comma separated argument passed to the logging func (prefix is included as first param)
+    formatLogSegments: (elements) => elements.join(" "), //formatter for each comma separated argument passed to the logging func (prefix is included as first param)
     colors: {
       //css color names or hex values. can just pass one or two and keep defaults for rest. pass false to disable
       critical: "red",
@@ -146,7 +147,7 @@ const createLogger = ({
         config.metadataConfig.includeInMessageString && meta,
       ].filter((x) => x);
 
-      const message = formatLogSegments(...allLogSegments);
+      const message = formatLogSegments(allLogSegments);
       if (!filter({ message, meta })) {
         return;
       }
@@ -162,6 +163,9 @@ const createLogger = ({
 
   return {
     ...levelLoggers,
+    //TODO(lt): document
+    //TODO(lt): expand docs in general
+    //TODO(lt): determine bundle size
     createSubLogger: ({ config: subConfig, metadata: subMetadata }) => {
       return createLogger({
         config: mergeConfigs(globalConfig, subConfig),
