@@ -14,9 +14,8 @@
   npm i @leothorp/loggle
 ```
 ### Usage
-In src/index.js (or another project file):
-```javascript
-import "loggle";
+
+import {createLogger} from "loggle";
 ```
 That's it! the overlay will be replaced with the "Show Errors" button from now on.
 
