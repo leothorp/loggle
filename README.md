@@ -21,11 +21,11 @@ In your project directory:
 
 ### Usage Example
 
-```
-//TODO(lt): vvv double check this import works
-import {createLogger} from "loggle";
+```javascript
+import { createLogger } from "@leothorp/loggle";
 
-const log = createLogger({ level: 4 });
+
+const log = createLogger({ level: 'debug' });
 log.critical("critical");
 log.error("error");
 log.warn("warning");
@@ -38,60 +38,57 @@ log.debug(
 );
 ```
 
-### Configuration/Metadata
+### Configuration
 
-`createLogger` accepts a single optional configuration object as a parameter. This object can contain one or both of `config` and `metadata` as keys. These are described in more detail in their respective sections further down.
+`createLogger` accepts a single optional configuration object as a parameter. This object can contain various config parameters. Default values and explanations for each property can be found in the defaultConfig object in src/index.js [TODO: docs in README on each property to come.]
 
-On both of these objects, it's only necessary to include the properties you want to change- any properties left undefined on the parent object (or its sub-objects) will take their default value automatically.
-
+It's only necessary to include the properties you want to change- any properties left undefined on the configuration object (or its sub-objects) will take their default/parent value automatically.
 
 #### `metadata`
-
-`metadata` is either an object, or a function which returns an object, containing arbitrary key/value pairs that you want
-included with every log message (by default, none are included.) It could be an app id,
-a reference to the environment, debugging context, or anything you find useful. It will be sent to your sinks, and can also be included with
-every logged message in the console with the config option `includeInMessageString`
-(see `config` section below.)
-
-Another common use case is to pass tags/categories for filtering and grouping
+The `metadata` key is either an object, or a function which returns an object, containing arbitrary key/value pairs that you want sent to your sink endpoint/function for each log message (by default, none are included.) It could be an app id,
+a reference to the environment, debugging context, etc. It's also a way to pass tags/categories for filtering and grouping
 messages.
-
-#### `config`
-
-Explanations of these properties and their default values are shown below.
-
-[Docs are WIP at the moment. defaults can be viewed in the defaultConfig variable in src/index.js/]
 
 
 ### Extending Log Configuration
 
 Each individual log call (e.g., `log.info()`) can also optionally be
-passed these same `config` and `metadata` options (with the exception of one config option: `localOverrideKeys`). These will be merged with the config/metadata values from the parent createLogger, with values from the individual log call taking precedence in the case of them both specifying a particular key.
+passed these config options. These will be merged with the values from the parent createLogger, with values from the individual log call taking precedence in the case of them both specifying a particular key.
+
+```javascript
+log.debug(
+  { prefix: { format: (parts: string[]) => `((${parts.join("__")})):` } },
+  "a debug message"
+);
+```
 
 Config/metadata can also be extended with the `createSubLogger` function, as shown in the example below.
 
+````javascript
+import { createLogger } from "@leothorp/loggle";
+
+
+const log = createLogger({
+  prefix: { includeLevelName: false, getCurrentTimeString: () => new Date() },
+});
+
+const subLog = log.createSubLogger({
+  prefix: {  getCurrentTimeString: Date.now },
+});
+
+subLog.info("sublog output");
+
+// The above has the same result as if there were a single parent config of
+// {
+//   prefix: {
+//     includeLevelName: false,
+//     getCurrentTimeString: Date.now,
+//   },
+// };
+
 ```
-import {createLogger} from "loggle";
 
-const log = createLogger({prefix: {formatLogSegments: segments => segments.join(" || "), getCurrentTimeString: () => new Date()}});
-
-const subLog = log.createSubLogger({prefix: {includeLevelName: false, getCurrentTimeString: Date.now}})
-
-/*
-The below will have the same result output as if there were a single parent config containing
-{
-  prefix: {
-    formatLogSegments: (segments) => segments.join(" || "),
-    includeLevelName: false,
-    getCurrentTimeString: Date.now,
-  },
-};
-*/
-subLog.info("some info");
-```
-
-To sum it up, the overall precedence order for any specified config/metadata is:
-
+To summarize, the overall precedence order for any specified config/metadata is:
 1. individual log function call
 2. parent createSubLogger
 3. parent createLogger
