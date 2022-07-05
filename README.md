@@ -45,8 +45,8 @@ log.debug(
 
 ### Configuration
 
-`createLogger` accepts a single optional configuration object as a parameter. This object can contain various config parameters. Default values and explanations for each property
-are below (taken from src/index.js).
+`createLogger` accepts a single optional configuration object as a parameter. This object can contain various config properties; default values and explanations for each property
+are below (taken from src/index.js). [Cleaner docs for those are work-in-progress.]
 
 It's only necessary to include the properties you want to change- any properties left undefined on the configuration object (or its sub-objects) will take their default/parent value automatically.
 
