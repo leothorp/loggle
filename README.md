@@ -38,6 +38,11 @@ log.debug(
 );
 ```
 
+### Output
+
+<img width="646" alt="image" src="https://user-images.githubusercontent.com/12928449/177232719-5e97e1b8-85cb-4b48-b10a-16080b3a00e1.png">
+
+
 ### Configuration/Metadata
 
 `createLogger` accepts a single optional configuration object as a parameter. This object can contain one or both of `config` and `metadata` as keys. These are described in more detail in their respective sections further down.
