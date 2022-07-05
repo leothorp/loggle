@@ -1,6 +1,6 @@
 {
   "name": "@leothorp/loggle",
-  "version": "0.0.28",
+  "version": "0.0.29",
   "description": "An easy-to-use, flexible, and tiny logging library for the browser.",
   "type": "module",
   "scripts": {
