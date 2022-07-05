@@ -54,7 +54,7 @@ const defaultConfig = {
       error: "orange",
       warn: "yellow",
       info: "skyblue",
-      debug: "green",
+      debug: "lightgreen",
     },
   },
 

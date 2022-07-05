@@ -33,17 +33,20 @@ log.warn("warning");
 log.info("some info", "more content");
 
 //override part of the config to add a different prefix format on this call
-log.debug(
-  { prefix: { format: (parts: string[]) => `((${parts.join("__")})):` } },
+log.debug({ 
+  prefix: {format: (parts: string[]) => `((${parts.join("__")})):`} 
+},
   "a debug message"
 );
 
 // send log output to an endpoint with additional metadata
 // (configurable globally or for individual logs)
-log.critical(
-  {
+log.critical({
     sink: { endpoint: "https://httpbin.org/post" },
-    metadata: { tags: ["bad-errors"], userAgent: navigator.userAgent },
+    metadata: { 
+      tags: ["bad-errors"], 
+      userAgent: navigator.userAgent 
+    },
   },
   "This browser doesn't work"
 );
