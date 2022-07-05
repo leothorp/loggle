@@ -71,7 +71,6 @@ const flattenObjHash = obj => {
   })
 }
 const flattenedConfigKeysHash = flattenObjHash(defaultConfig)
-console.log(flattenedConfigKeysHash)
 const isPlainConfigObj = (val) => {
   return isPlainObj(val) && Object.keys(val).every(k => flattenedConfigKeysHash.hasOwnProperty(k));
 };

@@ -29,14 +29,13 @@ const log = createLogger({ level: 4 });
 log.critical("critical");
 log.error("error");
 log.warn("warning");
-//override parent/default config property
-log.info({
-    prefix: { format: (parts: string[]) => `((${parts.join("__")})):` },
-  },
-  "some info",
-  "more content"
+log.info("some info", "more content");
+
+//override config to add a different prefix format on this call
+log.debug(
+  { prefix: { format: (parts: string[]) => `((${parts.join("__")})):` } },
+  "a debug message"
 );
-log.debug("a debug message", "more");
 ```
 
 ### Configuration/Metadata
