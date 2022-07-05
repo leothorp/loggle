@@ -254,7 +254,7 @@ const createLogger = (rawInputConfig = defaultConfig) => {
   return {
     ...levelLoggers,
     createSubLogger: (subConfig) => {
-      return createLogger(...mergeConfigs(globalConfig, subConfig));
+      return createLogger(mergeConfigs(globalConfig, subConfig));
     },
   };
 };
