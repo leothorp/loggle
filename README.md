@@ -8,8 +8,8 @@
 - `sink` options - specify a POST endpoint url (and/or a JS function) to receive the log output
 - typical logging level options, with configurable message prefixes and colors
 - include arbitrary metadata/tags with output
-- share/extend configuration via createSublogger
-- ~1kb minified + gzipped, no external dependencies
+- share/extend configuration via `createSublogger`
+- ~1kb minified + gzipped. no external dependencies
 
 ### Installation
 
