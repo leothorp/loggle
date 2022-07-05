@@ -134,7 +134,7 @@ const mergeConfigs = (defaultConfigVal, inputConfigVal) => {
   return final;
 };
 
-const getPrefixSegments = (levelName, config) => {
+const getPrefixSegments = (levelName, config, includeColor) => {
   if (!config.prefix) {
     return [];
   }
@@ -144,11 +144,9 @@ const getPrefixSegments = (levelName, config) => {
     ...config.prefix.getRestOfPrefix(),
   ];
 
-  const formatChar = config.prefix.colors ? "%c" : "";
+  const formatChar = includeColor ? "%c" : "";
   const prefixStr = formatChar + config.prefix.format(prefixElements);
-  const css = config.prefix.colors
-    ? `color: ${config.prefix.colors[levelName]};`
-    : "";
+  const css = includeColor ? `color: ${config.prefix.colors[levelName]};` : "";
   const prefixSegments = css ? [prefixStr, css] : [prefixStr];
   return prefixSegments;
 };
@@ -167,6 +165,13 @@ const normalizeLevel = (levelConfigVal) => {
   }
 
   return LOG_LEVELS[levelConfigVal];
+};
+
+const assembleSegments = (logArgs, levelName, config, includeColor) => {
+  return [
+    ...getPrefixSegments(levelName, config, includeColor),
+    ...logArgs,
+  ].filter((x) => x);
 };
 
 const createLogger = (rawInputConfig = defaultConfig) => {
@@ -189,12 +194,15 @@ const createLogger = (rawInputConfig = defaultConfig) => {
       }
       const metadata = invokeIfFunction(config.metadata);
 
-      const allLogSegments = [
-        ...getPrefixSegments(levelName, config),
-        ...logArgs,
-      ].filter((x) => x);
+      const allLogSegments = assembleSegments(
+        logArgs,
+        levelName,
+        config,
+        !!config.prefix.colors
+      );
 
       const asString = config.formatLogSegments(allLogSegments);
+
       if (
         !config.filter({
           message: {
@@ -206,6 +214,7 @@ const createLogger = (rawInputConfig = defaultConfig) => {
       ) {
         return;
       }
+
       if (config.sink.func) {
         config.sink.func({
           message: {
@@ -215,13 +224,22 @@ const createLogger = (rawInputConfig = defaultConfig) => {
           metadata,
         });
       }
+
       if (config.sink.endpoint) {
-        //TODO: batch option for sending sink endpoint requests
+        //TODO: add batch option for sending sink endpoint requests
+
+        //remove color string formatting/prefix segment
+        const segmentsForEndpoint = assembleSegments(
+          logArgs,
+          levelName,
+          config,
+          false
+        );
 
         post(config.sink.endpoint, {
           message: {
-            asString,
-            asSegments: allLogSegments,
+            asString: config.formatLogSegments(segmentsForEndpoint),
+            asSegments: segmentsForEndpoint,
           },
           metadata,
         });
