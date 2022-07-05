@@ -46,7 +46,6 @@ const defaultConfig = {
       debug: "green",
     },
   },
-  //TODO: batch option for sending sink endpoint requests
 
   sink: {
     //string URL of an endpoint the logger will POST logs to, if present.
@@ -58,8 +57,18 @@ const defaultConfig = {
     },
   },
 
-  //obj (or function returning obj) of arbitrary additional key/value pairs to include
+  // The `metadata` property is either an object, or a function which returns an object,
+  // containing arbitrary key/ value pairs that you want sent to your sink endpoint/function
+  // for each log message(by default , `clientTimestamp` is included.) It could be
+  // a reference to the environment/running application, debugging context, log categories/tags, etc. 
+  // Can be useful in conjunction with `filter`.
   metadata: () => ({ clientTimestamp: Date.now() }),
+
+  //disable the "merging" behavior for all config properties; replace the parent config completely
+  replaceParentConfig: false,
+
+  //disable the "merging" behavior for metadata properties
+  replaceParentMetadata: false,
 
   //function for filtering logs based on message content/metadata
   filter: ({ message: { asSegments, asString }, metadata }) => true,
@@ -89,6 +98,15 @@ const isPlainConfigObj = (val) => {
   );
 };
 const mergeConfigs = (defaultConfigVal, inputConfigVal) => {
+  if (inputConfigVal.replaceParentConfig) {
+    return inputConfigVal;
+  }
+  if (inputConfigVal.replaceParentMetadata) {
+    return mergeConfigs(
+      { ...defaultConfigVal, metadata: null },
+      inputConfigVal
+    );
+  }
   const final = mapObj(defaultConfigVal, (k, v) => {
     if (
       isPlainConfigObj(defaultConfigVal[k]) &&
@@ -177,6 +195,8 @@ const createLogger = (rawInputConfig = defaultConfig) => {
         });
       }
       if (config.sink.endpoint) {
+        //TODO: batch option for sending sink endpoint requests
+
         post(config.sink.endpoint, {
           message: { asString, asSegments: allLogSegments },
           metadata,

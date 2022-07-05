@@ -5,10 +5,10 @@
 ### Features
 
 - no config required, useful (but overrideable) defaults
-- `sink` options - pass an endpoint URL (or a JS function) to send logs to
-- standard set of log levels, with configurable message prefixes and colors
+- `sink` options - specify a POST endpoint url (and/or a JS function) to receive the log output
+- typical logging level options, with configurable message prefixes and colors
 - include arbitrary metadata/tags with logs
-- extend configuration via subloggers
+- extend configuration via createSublogger
 - ~1kb minified + gzipped, no external dependencies
 
 ### Installation
@@ -21,7 +21,7 @@ In your project directory:
 
 ### Usage Example
 
-```javascript
+```js
 import { createLogger } from "@leothorp/loggle";
 
 
@@ -48,10 +48,67 @@ log.debug(
 
 It's only necessary to include the properties you want to change- any properties left undefined on the configuration object (or its sub-objects) will take their default/parent value automatically.
 
-#### `metadata`
-The `metadata` key is either an object, or a function which returns an object, containing arbitrary key/value pairs that you want sent to your sink endpoint/function for each log message (by default, none are included.) It could be an app id,
-a reference to the environment, debugging context, etc. It's also a way to pass tags/categories for filtering and grouping
-messages.
+#### Default Configuration Values
+```js
+const defaultConfig = {
+  //globally enable/disable logging
+  enabled: true,
+
+  //current level for this logger, as int or string name value- logs belonging to levels higher than this will be silenced (see LOG_LEVELS above)
+  level: DEFAULT_LOG_LEVEL,
+
+  //formatter for the comma separated arguments passed to the logging func (prefix is included as first param)
+  formatLogSegments: (elements) => elements.join(" "),
+
+  //settings related to the prefix for each message. pass 'prefix: false' to remove the prefix entirely
+  prefix: {
+    includeLevelName: true,
+    includeTime: true,
+    getCurrentTimeString: () =>
+      new Date().toLocaleTimeString("en-US", { hour12: false }),
+    getRestOfPrefix: () => [],
+    format: (segments) => `[${segments.join(" ")}]`,
+
+    //css color names or hex values per-level.
+    //can just pass one or two and keep defaults for rest.
+    //pass 'colors: false' to disable colored prefixes
+    colors: {
+      critical: "red",
+      error: "orange",
+      warn: "yellow",
+      info: "skyblue",
+      debug: "green",
+    },
+  },
+
+  //settings for where the logger should send the log output
+  sink: {
+    //string URL of an endpoint the logger will POST logs to, if present.
+    endpoint: null,
+
+    //function to pass each log to. 'sink: {func: false}' to disable.
+    func: ({ message: { asSegments, asString }, metadata }) => {
+      console.log(...asSegments);
+    },
+  },
+
+  // The `metadata` property is either an object, or a function which returns an object,
+  // containing arbitrary key/ value pairs that you want sent to your sink endpoint/function
+  // for each log message(by default , `clientTimestamp` is included.) It could be
+  // a reference to the environment/running application, debugging context, log categories/tags, etc. 
+  // Can be useful in conjunction with `filter`.
+  metadata: () => ({ clientTimestamp: Date.now() }),
+
+  //disable the "merging" behavior for all config properties; replace the parent config completely
+  replaceParentConfig: false,
+
+  //disable the "merging" behavior for metadata properties
+  replaceParentMetadata: false,
+
+  //function for filtering logs based on message content/metadata
+  filter: ({ message: { asSegments, asString }, metadata }) => true,
+};
+```
 
 
 ### Extending Log Configuration
@@ -59,7 +116,7 @@ messages.
 Each individual log call (e.g., `log.info()`) can also optionally be
 passed these config options. These will be merged with the values from the parent createLogger, with values from the individual log call taking precedence in the case of them both specifying a particular key.
 
-```javascript
+```js
 log.debug(
   { prefix: { format: (parts: string[]) => `((${parts.join("__")})):` } },
   "a debug message"
@@ -68,7 +125,7 @@ log.debug(
 
 Config/metadata can also be extended with the `createSubLogger` function, as shown in the example below.
 
-````javascript
+````js
 import { createLogger } from "@leothorp/loggle";
 
 
