@@ -142,7 +142,7 @@ const getPrefixSegments = (levelName, config, includeColor) => {
     config.prefix.includeLevelName && levelName,
     config.prefix.includeTime && config.prefix.getCurrentTimeString(),
     ...config.prefix.getRestOfPrefix(),
-  ];
+  ].filter((x) => x);
 
   const formatChar = includeColor ? "%c" : "";
   const prefixStr = formatChar + config.prefix.format(prefixElements);
