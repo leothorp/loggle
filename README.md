@@ -25,13 +25,18 @@ In your project directory:
 //TODO(lt): vvv double check this import works
 import {createLogger} from "loggle";
 
-export const log = createLogger({});
-
-log.critical("critical")
-log.error("error")
-log.warn("warning")
-log.info("some info", "more content")
-log.debug("a debug message")
+const log = createLogger({ level: 4 });
+log.critical("critical");
+log.error("error");
+log.warn("warning");
+//override parent/default config property
+log.info({
+    prefix: { format: (parts: string[]) => `((${parts.join("__")})):` },
+  },
+  "some info",
+  "more content"
+);
+log.debug("a debug message", "more");
 ```
 
 ### Configuration/Metadata
