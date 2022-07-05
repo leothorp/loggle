@@ -27,17 +27,20 @@ In your project directory:
 
 import { createLogger } from "@leothorp/loggle";
 
-const log = createLogger({ level: "debug" });
+//configure logging for different environments at build time 
+const log = createLogger({ level: process.env.LOG_LEVEL });
 log.critical("critical");
 log.error("error");
 log.warn("warning");
 log.info("some info", "more content");
 
-//override config to add a different prefix format on this call
+//override part of the config to add a different prefix format on this call
 log.debug(
   { prefix: { format: (parts: string[]) => `((${parts.join("__")})):` } },
   "a debug message"
 );
+
+//send to log sink endpoint
 
 ```
 
