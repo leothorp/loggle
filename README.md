@@ -39,7 +39,7 @@ log.debug(
   "a debug message"
 );
 
-// send log output to an endpoint, along with additional metadata
+// send log output to an HTTP endpoint, along with additional metadata
 // (configurable globally or per-log)
 log.critical(
   {
