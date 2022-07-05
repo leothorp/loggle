@@ -194,9 +194,6 @@ const createLogger = (rawInputConfig = defaultConfig) => {
   const globalConfig = mergeConfigs(defaultConfig, rawInputConfig);
   const makeLevelLogger = (levelName, intVal) => {
     return (...baseLogArgs) => {
-      //TODO(lt): vvv how differentiate another obj they want to send with same keys?
-      //localOverrideKeys is for that.
-
       const hasAdditionalConfig = isPlainConfigObj(baseLogArgs[0]);
 
       const config = hasAdditionalConfig
@@ -250,7 +247,7 @@ const createLogger = (rawInputConfig = defaultConfig) => {
       }
 
       if (config.sink.endpoint) {
-        //TODO: add batch option for sending sink endpoint requests
+        
 
         //remove color string formatting/prefix segment
         const segmentsForEndpoint = assembleSegments(
@@ -260,6 +257,8 @@ const createLogger = (rawInputConfig = defaultConfig) => {
           false
         );
 
+        //fire and forget.
+        //TODO: batching/retry options
         post(config.sink.endpoint, {
           message: {
             asString: config.formatLogSegments(segmentsForEndpoint),
