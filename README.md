@@ -150,7 +150,7 @@ log.debug(
 
 Config/metadata can also be extended with the `createSubLogger` function, as shown in the example below.
 
-````js
+```js
 
 import { createLogger } from "@leothorp/loggle";
 
