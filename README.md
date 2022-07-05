@@ -175,6 +175,7 @@ subLog.info("sublog output");
 
 ```
 
+
 To summarize, the overall precedence order for any specified config/metadata is:
 1. individual log function call
 2. parent createSubLogger
