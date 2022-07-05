@@ -16,6 +16,7 @@ const defaultConfig = {
   //globally enable/disable logging
   enabled: true,
   level: DEFAULT_LOG_LEVEL, //suggest setting this via environment variable
+  formatLogSegments: (elements) => elements.join(" "), //formatter for each comma separated argument passed to the logging func (prefix is included as first param)
   prefix: {
     //pass false to disable
     includeLevelName: true,
@@ -23,7 +24,6 @@ const defaultConfig = {
     getCurrentTimeString: () =>
       new Date().toLocaleTimeString("en-US", { hour12: false }),
     getRestOfPrefix: () => [],
-    formatLogSegments: (elements) => elements.join(" "), //formatter for each comma separated argument passed to the logging func (prefix is included as first param)
     colors: {
       //css color names or hex values. can just pass one or two and keep defaults for rest. pass false to disable
       critical: "red",
@@ -35,7 +35,7 @@ const defaultConfig = {
   },
   sink: {
     endpoint: null, //string URL of an endpoint the logger will POST logs to, if present.
-    func: ({ message, metadata }) => console.log(message, metaProperties), //function to pass each log to.
+    func: ({ message, metadata, config }) => console.log(message, metadata), //function to pass each log to.
   },
   metadataConfig: {
     //obj of arbitrary additional key/value pairs to include
@@ -65,7 +65,7 @@ const mergeConfigs = (defaultConfigVal, inputConfigVal) => {
       return [k, mergeConfigs(defaultConfigVal[k], inputConfigVal[k])];
     }
 
-    return inputConfigVal.hasOwnProperty(k) ? inputConfigVal[k] : v;
+    return [k, inputConfigVal.hasOwnProperty(k) ? inputConfigVal[k] : v];
   });
   return final;
 };
@@ -77,12 +77,12 @@ const getPrefixSegments = (levelName, config) => {
   const prefixElements = [
     config.includeLevelName && levelName,
     config.includeTime && config.prefix.getCurrentTimeString(),
-    ...getRestOfPrefix(),
+    ...config.prefix.getRestOfPrefix(),
   ];
   // const prefix = [`%c[${includeLevelName && name}`, config.prefix.getCurrentTimeString()]`].join(
   //   " "
   // );
-  const prefixStr = formatPrefixString(prefixElements);
+  const prefixStr = config.formatLogSegments(prefixElements);
   const css = config.prefix.colors
     ? `color: ${config.prefix.colors[levelName]};`
     : "";
@@ -142,7 +142,7 @@ const createLogger = ({
         : globalConfig;
       const logArgs = hasAdditionalConfig ? baseLogArgs.slice(1) : baseLogArgs;
 
-      if (!config.enabled || intVal > LOG_LEVEL) {
+      if (!config.enabled || intVal > config.level) {
         return;
       }
 
@@ -156,8 +156,8 @@ const createLogger = ({
         config.metadataConfig.includeInMessageString && metadata,
       ].filter((x) => x);
 
-      const message = formatLogSegments(allLogSegments);
-      if (!filter({ message, metadata, config })) {
+      const message = config.formatLogSegments(allLogSegments);
+      if (!config.filter({ message, metadata, config })) {
         return;
       }
       config.sink.func({ message, metadata, config });
@@ -165,10 +165,13 @@ const createLogger = ({
         post(config.sink.endpoint, { message, metadata, config });
       }
     };
-  const levelLoggers = mapObj(levels, (name, intValue) => [
-    name,
-    makeLevelLogger(name, intValue),
-  ]);
+  const levelLoggers = mapObj(LOG_LEVELS, (name, intValue) => {
+
+    return [
+      name,
+      makeLevelLogger(name, intValue),
+    ]
+  });
 
   return {
     ...levelLoggers,
