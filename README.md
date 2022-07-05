@@ -24,10 +24,9 @@ In your project directory:
 #### Code
 
 ```js
-
 import { createLogger } from "@leothorp/loggle";
 
-//configure logging for different environments at build time 
+//configure logging for different environments at build time
 const log = createLogger({ level: process.env.LOG_LEVEL });
 log.error("error");
 log.warn("warning");
@@ -39,12 +38,12 @@ log.debug(
   "a debug message"
 );
 
-//send to log sink endpoint 
-//(configurable globally or for individual logs)
+// send log output to an endpoint with additional metadata
+// (configurable globally or for individual logs)
 log.critical(
   {
     sink: { endpoint: "https://httpbin.org/post" },
-    metadata: { userAgent: navigator.userAgent },
+    metadata: { tags: ["bad-errors"], userAgent: navigator.userAgent },
   },
   "This browser doesn't work"
 );
@@ -64,23 +63,21 @@ It's only necessary to include the properties you want to change- any properties
 #### Default Configuration Values
 
 ```js
-
 const defaultConfig = {
   //globally enable/disable logging
   enabled: true,
 
-  //current level for this logger, as int or string name value- 
+  //current level for this logger, as int or string name value-
   //logs belonging to levels higher than this will be silenced
   //(see LOG_LEVELS above for possible values)
   level: DEFAULT_LOG_LEVEL,
 
-  //formatter for the comma separated arguments, 
+  //formatter for the comma separated arguments,
   //should return the final message string
   //(prefix is included as first param)
-  formatLogSegments: (elements) =>
-    elements.join(" "),
+  formatLogSegments: (elements) => elements.join(" "),
 
-  //settings related to the prefix for each message. 
+  //settings related to the prefix for each message.
   //pass 'prefix: false' to remove the prefix entirely
   prefix: {
     includeLevelName: true,
@@ -90,11 +87,9 @@ const defaultConfig = {
         hour12: false,
       }),
 
-
-    //format string output for prefix, 
+    //format string output for prefix,
     //also can add arbitrary material here
-    format: (segments) =>
-      `[${segments.join(" ")}]`,
+    format: (segments) => `[${segments.join(" ")}]`,
 
     //css color names or hex values per-level.
     //can just pass one or two and keep defaults for rest.
@@ -114,10 +109,7 @@ const defaultConfig = {
     endpoint: null,
 
     //function to pass each log to. 'sink: {func: false}' to disable.
-    func: ({
-      message: { asSegments, asString },
-      metadata,
-    }) => {
+    func: ({ message: { asSegments, asString }, metadata }) => {
       console.log(...asSegments);
     },
   },
@@ -125,7 +117,7 @@ const defaultConfig = {
   // The `metadata` property is either an object, or a function which returns an object,
   // containing arbitrary key/ value pairs that you want sent to your sink endpoint/function
   // for each log message(by default , `clientTimestamp` is included.)
-  // references to the environment/running application, debugging context, 
+  // references to the environment/running application, debugging context,
   // log categories/ tags, etc.
   // Can be useful in conjunction with `filter`.
   metadata: () => ({
@@ -140,12 +132,8 @@ const defaultConfig = {
   replaceParentMetadata: false,
 
   //function for filtering logs based on message content/metadata
-  filter: ({
-    message: { asSegments, asString },
-    metadata,
-  }) => true,
+  filter: ({ message: { asSegments, asString }, metadata }) => true,
 };
-
 ```
 
 ### Extending Log Configuration
@@ -154,20 +142,16 @@ Each individual log call (e.g., `log.info()`) can also optionally be
 passed these config options. These will be merged with the values from the parent createLogger, with values from the individual log call taking precedence in the case of them both specifying a particular key.
 
 ```js
-
 log.debug(
   { prefix: { format: (parts: string[]) => `((${parts.join("__")})):` } },
   "a debug message"
 );
-
 ```
 
 Config/metadata can also be extended with the `createSubLogger` function, as shown in the example below.
 
 ```js
-
 import { createLogger } from "@leothorp/loggle";
-
 
 const parentLog = createLogger({
   prefix: {
@@ -177,9 +161,9 @@ const parentLog = createLogger({
 });
 
 const subLog = parentLog.createSubLogger({
-  prefix: { 
-    includeLevelName: false, 
-    getCurrentTimeString: Date.now 
+  prefix: {
+    includeLevelName: false,
+    getCurrentTimeString: Date.now,
   },
 });
 
@@ -193,13 +177,11 @@ subLog.critical("sublog output");
 //     getCurrentTimeString: Date.now,
 //   },
 // };
-
 ```
 
-
 To summarize, the overall precedence order for any specified config/metadata is:
+
 1. individual log function call
 2. parent createSubLogger
 3. parent createLogger
 4. library defaults
-

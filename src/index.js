@@ -4,8 +4,12 @@ const mapObj = (obj, fn) => {
   const mappedAsArr = Object.entries(obj).map(([k, v]) => fn(k, v));
   return Object.fromEntries(mappedAsArr);
 };
-const invokeIfFunction = (val) => (typeof val === "function" ? val() : val);
-
+const invokeIfFunction = (val) => {
+  return isFunc(val) ? val() : val;
+};
+const wrapOneFunction = (val) => {
+  return isFunc(val) ? val : () => val;
+};
 const DEFAULT_LOG_LEVEL = "info";
 
 const LOG_LEVELS = {
@@ -112,6 +116,9 @@ const isPlainConfigObj = (val) => {
     Object.keys(val).every((k) => flattenedConfigKeysHash.hasOwnProperty(k))
   );
 };
+const isFunc = (val) => {
+  return typeof val === "function";
+};
 const mergeConfigs = (defaultConfigVal, inputConfigVal) => {
   if (inputConfigVal.replaceParentConfig) {
     return inputConfigVal;
@@ -119,6 +126,16 @@ const mergeConfigs = (defaultConfigVal, inputConfigVal) => {
   if (inputConfigVal.replaceParentMetadata) {
     return mergeConfigs(
       { ...defaultConfigVal, metadata: null },
+      inputConfigVal
+    );
+  }
+  //special case for merging multiple metadata function outputs;
+  //create array of functions to invoke later
+  const metadataFields = [defaultConfigVal.metadata, inputConfigVal.metadata];
+  if (metadataFields.every((x) => x)) {
+    const mergedMetadata = metadataFields.map(wrapOneFunction);
+    return mergeConfigs(
+      { ...defaultConfigVal, metadata: mergedMetadata },
       inputConfigVal
     );
   }
@@ -140,7 +157,7 @@ const getPrefixSegments = (levelName, config, includeColor) => {
   }
   const prefixElements = [
     config.prefix.includeLevelName && levelName,
-    config.prefix.includeTime && config.prefix.getCurrentTimeString()
+    config.prefix.includeTime && config.prefix.getCurrentTimeString(),
   ].filter((x) => x);
 
   const formatChar = includeColor ? "%c" : "";
@@ -191,7 +208,15 @@ const createLogger = (rawInputConfig = defaultConfig) => {
       if (!config.enabled || intVal > normalizeLevel(config.level)) {
         return;
       }
-      const metadata = { ...invokeIfFunction(config.metadata), level: levelName };
+      const metadata = {
+        ...(Array.isArray(config.metadata)
+          ? config.metadata.reduce(
+              (acc, curr) => Object.assign(acc, curr()),
+              {}
+            )
+          : invokeIfFunction(config.metadata)),
+        level: levelName,
+      };
 
       const allLogSegments = assembleSegments(
         logArgs,
