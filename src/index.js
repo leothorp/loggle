@@ -191,7 +191,7 @@ const createLogger = (rawInputConfig = defaultConfig) => {
       if (!config.enabled || intVal > normalizeLevel(config.level)) {
         return;
       }
-      const metadata = invokeIfFunction(config.metadata);
+      const metadata = { ...invokeIfFunction(config.metadata), level: levelName };
 
       const allLogSegments = assembleSegments(
         logArgs,

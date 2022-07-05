@@ -29,7 +29,6 @@ import { createLogger } from "@leothorp/loggle";
 
 //configure logging for different environments at build time 
 const log = createLogger({ level: process.env.LOG_LEVEL });
-log.critical("critical");
 log.error("error");
 log.warn("warning");
 log.info("some info", "more content");
@@ -40,8 +39,15 @@ log.debug(
   "a debug message"
 );
 
-//send to log sink endpoint
-
+//send to log sink endpoint 
+//(configurable globally or for individual logs)
+log.critical(
+  {
+    sink: { endpoint: "https://httpbin.org/post" },
+    metadata: { userAgent: navigator.userAgent },
+  },
+  "This browser doesn't work"
+);
 ```
 
 #### Console Output
