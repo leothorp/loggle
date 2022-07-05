@@ -39,7 +39,7 @@ const defaultConfig = {
       new Date().toLocaleTimeString("en-US", {
         hour12: false,
       }),
-    getRestOfPrefix: () => [],
+    //format string output, also can add arbitrary material to prefix here
     format: (segments) => `[${segments.join(" ")}]`,
 
     //css color names or hex values per-level.
@@ -140,8 +140,7 @@ const getPrefixSegments = (levelName, config, includeColor) => {
   }
   const prefixElements = [
     config.prefix.includeLevelName && levelName,
-    config.prefix.includeTime && config.prefix.getCurrentTimeString(),
-    ...config.prefix.getRestOfPrefix(),
+    config.prefix.includeTime && config.prefix.getCurrentTimeString()
   ].filter((x) => x);
 
   const formatChar = includeColor ? "%c" : "";

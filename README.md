@@ -83,7 +83,10 @@ const defaultConfig = {
       new Date().toLocaleTimeString("en-US", {
         hour12: false,
       }),
-    getRestOfPrefix: () => [],
+
+
+    //format string output for prefix, 
+    //also can add arbitrary material here
     format: (segments) =>
       `[${segments.join(" ")}]`,
 
@@ -160,19 +163,26 @@ Config/metadata can also be extended with the `createSubLogger` function, as sho
 import { createLogger } from "@leothorp/loggle";
 
 
-const log = createLogger({
-  prefix: { includeLevelName: false, getCurrentTimeString: () => new Date() },
+const parentLog = createLogger({
+  prefix: {
+    format: (parts: string[]) => `<${parts.join("|")}$$>`,
+    getCurrentTimeString: () => new Date(),
+  },
 });
 
-const subLog = log.createSubLogger({
-  prefix: {  getCurrentTimeString: Date.now },
+const subLog = parentLog.createSubLogger({
+  prefix: { 
+    includeLevelName: false, 
+    getCurrentTimeString: Date.now 
+  },
 });
 
-subLog.info("sublog output");
+subLog.critical("sublog output");
 
 // The above has the same result as if there were a single parent config of
 // {
 //   prefix: {
+//     format: (parts: string[]) => `<${parts.join("|")}$$>`
 //     includeLevelName: false,
 //     getCurrentTimeString: Date.now,
 //   },
