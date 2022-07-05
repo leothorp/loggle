@@ -28,31 +28,29 @@ import { createLogger } from "@leothorp/loggle";
 
 //configure logging for different environments at build time
 const log = createLogger({ level: process.env.LOG_LEVEL });
+
 log.error("error");
 log.warn("warning");
 log.info("some info", "more content");
 
-//override part of the config to add a different prefix format on this call
-log.debug({ 
-  prefix: {format: (parts: string[]) => `((${parts.join("__")})):`} 
-},
+//override parent/default config property
+log.debug(
+  { prefix: { format: (parts: string[]) => `<${parts.join("__")}>:` } },
   "a debug message"
 );
 
-// send log output to an endpoint with additional metadata
-// (configurable globally or for individual logs)
-log.critical({
+// send log output to an endpoint, along with additional metadata
+// (configurable globally or per-log)
+log.critical(
+  {
     sink: { endpoint: "https://httpbin.org/post" },
-    metadata: { 
-      tags: ["bad-errors"], 
-      userAgent: navigator.userAgent 
-    },
+    metadata: { tags: ["bad-errors"], userAgent: navigator.userAgent },
   },
   "This browser doesn't work"
 );
 ```
 
-#### Console Output
+#### Browser Console Output
 
 <img width="646" alt="image" src="https://user-images.githubusercontent.com/12928449/177232719-5e97e1b8-85cb-4b48-b10a-16080b3a00e1.png">
 
