@@ -123,7 +123,7 @@ const mergeConfigs = (defaultConfigVal, inputConfigVal) => {
   if (inputConfigVal.replaceParentConfig) {
     return inputConfigVal;
   }
-  if (inputConfigVal.replaceParentMetadata) {
+  if (inputConfigVal.replaceParentMetadata && !!defaultConfigVal.metadata) {
     return mergeConfigs(
       { ...defaultConfigVal, metadata: null },
       inputConfigVal
@@ -135,8 +135,8 @@ const mergeConfigs = (defaultConfigVal, inputConfigVal) => {
   if (metadataFields.every((x) => x)) {
     const mergedMetadata = metadataFields.map(wrapOneFunction);
     return mergeConfigs(
-      { ...defaultConfigVal, metadata: mergedMetadata },
-      inputConfigVal
+      { ...defaultConfigVal, metadata: null },
+      { ...inputConfigVal, metadata: mergedMetadata }
     );
   }
   const final = mapObj(defaultConfigVal, (k, v) => {
