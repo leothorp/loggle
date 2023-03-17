@@ -32,3 +32,11 @@ export const flattenObjHash = (obj) => {
     return { [k]: true };
   });
 };
+
+export const tryParseJson = (str) => {
+  try {
+    return JSON.parse(str);
+  } catch (e) {
+    return str;
+  }
+};

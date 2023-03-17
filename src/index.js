@@ -4,7 +4,12 @@ import {
   LOG_LEVELS,
 } from "./defaultConfig.js";
 import { post } from "./request.js";
-import { invokeIfFunction, mapObj, wrapOneFunction } from "./utils.js";
+import {
+  invokeIfFunction,
+  mapObj,
+  tryParseJson,
+  wrapOneFunction,
+} from "./utils.js";
 
 const mergeConfigs = (defaultConfigVal, inputConfigVal) => {
   if (inputConfigVal.replaceParentConfig) {
@@ -77,81 +82,131 @@ const assembleSegments = (logArgs, levelName, config, includeColor) => {
   ].filter((x) => x);
 };
 
+// shared global BroadcastChannel instance across all logger instances to reduce mem usage. lazily initialized on first usage
+let bc = null;
+
 const createLogger = (rawInputConfig = defaultConfig) => {
+  console.log("cwwwreatiyyng");
   const globalConfig = mergeConfigs(defaultConfig, rawInputConfig);
   const makeLevelLogger = (levelName, intVal) => {
+    // only show BroadcastChannel browser compat warning once
+    let hasShownBcIncompatibilityMsg = false;
+
     return (...baseLogArgs) => {
-      const hasAdditionalConfig = isPlainConfigObj(baseLogArgs[0]);
+      // try/catch wrapper to swallow any errors in custom sink func/other logging code
+      try {
+        const hasAdditionalConfig = isPlainConfigObj(baseLogArgs[0]);
 
-      const config = hasAdditionalConfig
-        ? mergeConfigs(globalConfig, baseLogArgs[0])
-        : globalConfig;
+        const config = hasAdditionalConfig
+          ? mergeConfigs(globalConfig, baseLogArgs[0])
+          : globalConfig;
 
-      const logArgs = hasAdditionalConfig ? baseLogArgs.slice(1) : baseLogArgs;
+        const logArgs = hasAdditionalConfig
+          ? baseLogArgs.slice(1)
+          : baseLogArgs;
 
-      if (!config.enabled || intVal > normalizeLevel(config.level)) {
-        return;
-      }
-      const metadata = {
-        ...(Array.isArray(config.metadata)
-          ? config.metadata.reduce(
-              (acc, curr) => Object.assign(acc, curr()),
-              {}
-            )
-          : invokeIfFunction(config.metadata)),
-        level: levelName,
-      };
+        if (!config.enabled || intVal > normalizeLevel(config.level)) {
+          return;
+        }
+        const metadata = {
+          ...(Array.isArray(config.metadata)
+            ? config.metadata.reduce(
+                (acc, curr) => Object.assign(acc, curr()),
+                {}
+              )
+            : invokeIfFunction(config.metadata)),
+          level: levelName,
+        };
 
-      const allLogSegments = assembleSegments(
-        logArgs,
-        levelName,
-        config,
-        !!config.prefix.colors
-      );
-
-      const asString = config.formatLogSegments(allLogSegments);
-
-      if (
-        !config.filter({
-          message: {
-            asString,
-            asSegments: allLogSegments,
-          },
-          metadata,
-        })
-      ) {
-        return;
-      }
-
-      if (config.sink.func) {
-        config.sink.func({
-          message: {
-            asString,
-            asSegments: allLogSegments,
-          },
-          metadata,
-        });
-      }
-
-      if (config.sink.endpoint) {
-        //remove color string formatting/prefix segment
-        const segmentsForEndpoint = assembleSegments(
+        const allLogSegments = assembleSegments(
           logArgs,
           levelName,
           config,
-          false
+          !!config.prefix.colors
         );
 
-        //fire and forget log payload to sink HTTP endpoint.
-        //TODO: batching/retry options, captureErrors option
+        const asString = config.formatLogSegments(allLogSegments);
 
-        post(config.sink.endpoint, {
-          message: {
-            asString: config.formatLogSegments(segmentsForEndpoint),
-            asSegments: segmentsForEndpoint,
-          },
-          metadata,
-        });
+        if (
+          !config.filter({
+            message: {
+              asString,
+              asSegments: allLogSegments,
+            },
+            metadata,
+          })
+        ) {
+          return;
+        }
+
+        if (config.sink.func) {
+          config.sink.func({
+            message: {
+              asString,
+              asSegments: allLogSegments,
+            },
+            metadata,
+          });
+        }
+
+        if (config.sink.endpoint) {
+          //remove color string formatting/prefix segment
+          const segmentsForEndpoint = assembleSegments(
+            logArgs,
+            levelName,
+            config,
+            false
+          );
+
+          //fire and forget log payload to sink HTTP endpoint.
+          //TODO: batching/retry options, captureErrors option
+
+          post(config.sink.endpoint, {
+            message: {
+              asString: config.formatLogSegments(segmentsForEndpoint),
+              asSegments: segmentsForEndpoint,
+            },
+            metadata,
+          });
+        }
+
+        if (config.sink.aggregateTabs) {
+          if (!("BroadcastChannel" in window)) {
+            if (!hasShownBcIncompatibilityMsg) {
+              console.log(
+                "BroadcastChannel not supported in this browser. Disabling tab log aggregation."
+              );
+            }
+          } else {
+            if (!bc) {
+              bc = new BroadcastChannel("_loggle_aggregated_tab_logs");
+              bc.addEventListener("message", (event) => {
+                if (event.data.type === "log") {
+                  console.log(...event.data.args.map((s) => tryParseJson(s)));
+                }
+              });
+            }
+
+            bc.postMessage({
+              type: "log",
+
+              args: allLogSegments.map((s) =>
+                typeof s === "object" ? JSON.stringify(s) : s
+              ),
+            });
+          }
+        } else {
+          // allow GC of broadcastchannel instance if config changed to disable
+          if (bc) {
+            bc.close();
+            bc = null;
+          }
+        }
+      } catch {
+        console.error(
+          "An error occurred during log execution. Args:",
+          ...baseLogArgs
+        );
       }
     };
   };

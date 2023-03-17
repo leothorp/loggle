@@ -4,13 +4,13 @@
 
 ### Features
 
-- no config required, useful (but overrideable) defaults
+- useful (overrideable) defaults, no config required.
+- 1.4kb minified + gzipped. no external dependencies.
 - `sink` options for easily sending log output to different destinations. specify a POST endpoint url or arbitrary JS function to receive the log output. 
 - `aggregateTabs` option to combine log output from multiple tabs open to the same page.
 - typical logging level options, with configurable message prefixes and colors
 - include arbitrary metadata/tags with output
 - share/extend configuration across multiple logger instances via `createSublogger`
-- 1.3kb minified + gzipped. no external dependencies.
 
 ### Installation
 
@@ -138,6 +138,9 @@ const defaultConfig = {
 
   //function for filtering logs based on message content/metadata
   filter: ({ message: { asSegments, asString }, metadata }) => true,
+
+  //if true, wrap log calls in a 0ms setTimeout() to avoid blocking event loop
+  async: false
 };
 ```
 
