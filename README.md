@@ -10,7 +10,7 @@
 - typical logging level options, with configurable message prefixes and colors
 - include arbitrary metadata/tags with output
 - share/extend configuration across multiple logger instances via `createSublogger`
-- 1kb minified + gzipped. no external dependencies.
+- 1.3kb minified + gzipped. no external dependencies.
 
 ### Installation
 
