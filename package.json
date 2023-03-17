@@ -1,13 +1,13 @@
 {
   "name": "@leothorp/loggle",
   "version": "0.0.37",
-  "description": "An easy-to-use, flexible, and tiny logging library for the browser.",
+  "description": "Easy-to-use and configurable logging library for the browser.",
   "type": "module",
   "scripts": {
     "test": "node tests/run.js",
     "build": "webpack --config webpack.config.cjs && gzip -9k dist/bundle.js",
-    "check-size": "npm run build && stat -f '%z' dist/bundle.js.gz",
-    "build-pub": "npm run check-size && npm-pub 'release'"
+    "check-size": "npm run build && stat -f '%z' dist/bundle.js.gz && rm dist/bundle.js.gz",
+    "build-pub": "npm run test && npm run check-size && npm-pub 'release'"
   },
   "engines": {
     "node": "^14 || ^16 || >=18"

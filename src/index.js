@@ -1,15 +1,6 @@
 import { post } from "./request.js";
+import { invokeIfFunction, mapObj, wrapOneFunction } from "./utils.js";
 
-const mapObj = (obj, fn) => {
-  const mappedAsArr = Object.entries(obj).map(([k, v]) => fn(k, v));
-  return Object.fromEntries(mappedAsArr);
-};
-const invokeIfFunction = (val) => {
-  return isFunc(val) ? val() : val;
-};
-const wrapOneFunction = (val) => {
-  return isFunc(val) ? val : () => val;
-};
 const DEFAULT_LOG_LEVEL = "info";
 
 const LOG_LEVELS = {
@@ -116,9 +107,7 @@ const isPlainConfigObj = (val) => {
     Object.keys(val).every((k) => flattenedConfigKeysHash.hasOwnProperty(k))
   );
 };
-const isFunc = (val) => {
-  return typeof val === "function";
-};
+
 const mergeConfigs = (defaultConfigVal, inputConfigVal) => {
   if (inputConfigVal.replaceParentConfig) {
     return inputConfigVal;
@@ -247,8 +236,6 @@ const createLogger = (rawInputConfig = defaultConfig) => {
       }
 
       if (config.sink.endpoint) {
-        
-
         //remove color string formatting/prefix segment
         const segmentsForEndpoint = assembleSegments(
           logArgs,
@@ -257,8 +244,9 @@ const createLogger = (rawInputConfig = defaultConfig) => {
           false
         );
 
-        //fire and forget.
-        //TODO: batching/retry options
+        //fire and forget log payload to sink HTTP endpoint.
+        //TODO: batching/retry options, captureErrors option
+
         post(config.sink.endpoint, {
           message: {
             asString: config.formatLogSegments(segmentsForEndpoint),

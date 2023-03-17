@@ -1,15 +1,16 @@
 # loggle
 
-## An easy-to-use, flexible, and tiny logging library for the browser.
+## Easy-to-use and configurable logging library for the browser.
 
 ### Features
 
 - no config required, useful (but overrideable) defaults
-- `sink` options - specify a POST endpoint url (and/or a JS function) to receive the log output
+- `sink` options for easily sending log output to different destinations. specify a POST endpoint url or arbitrary JS function to receive the log output. 
+- `aggregateTabs` option to combine log output from multiple tabs open to the same page.
 - typical logging level options, with configurable message prefixes and colors
 - include arbitrary metadata/tags with output
-- share/extend configuration via `createSublogger`
-- ~1kb minified + gzipped. no external dependencies
+- share/extend configuration across multiple logger instances via `createSublogger`
+- 1kb minified + gzipped. no external dependencies.
 
 ### Installation
 
@@ -59,7 +60,7 @@ log.critical(
 `createLogger` accepts a single optional configuration object as a parameter. This object can contain various config properties; default values and explanations for each property
 are below (taken from src/index.js). [Cleaner docs for those are work-in-progress.]
 
-It's only necessary to include the properties you want to change- any properties left undefined on the configuration object (or its sub-objects) will take their default/parent value automatically.
+It's only necessary to include the properties you want to change- any properties left undefined on the configuration object will take their default value automatically.
 
 #### Default Configuration Values
 
@@ -104,7 +105,7 @@ const defaultConfig = {
     },
   },
 
-  //settings for where the logger should send the log output
+  //settings for where the logger should send the log output.
   sink: {
     //string URL of an endpoint the logger will POST logs to, if present.
     endpoint: null,
@@ -113,6 +114,9 @@ const defaultConfig = {
     func: ({ message: { asSegments, asString }, metadata }) => {
       console.log(...asSegments);
     },
+
+    // if true, when multiple tabs are open to your page, each tab will log the aggregated log output from all other tabs. Useful for debugging a sequence of events spanning multiple tabs.
+    aggregateTabs: false
   },
 
   // The `metadata` property is either an object, or a function which returns an object,
