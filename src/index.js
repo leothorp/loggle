@@ -194,12 +194,6 @@ const createLogger = (rawInputConfig = defaultConfig) => {
               ),
             });
           }
-        } else {
-          // allow GC of broadcastchannel instance if config changed to disable
-          if (bc) {
-            bc.close();
-            bc = null;
-          }
         }
       } catch {
         console.error(
