@@ -11,3 +11,24 @@ export const invokeIfFunction = (val) => {
 export const wrapOneFunction = (val) => {
   return isFunc(val) ? val : () => val;
 };
+
+export const toObj = (arr, subObjSelector) =>
+  arr.reduce((acc, curr) => {
+    const objToAdd = subObjSelector(curr);
+    return { ...acc, ...objToAdd };
+  }, {});
+
+export const isPlainObj = (val) =>
+  !Array.isArray(val) && typeof val === "object" && val !== null;
+
+export const flattenObjHash = (obj) => {
+  return toObj(Object.keys(obj), (k) => {
+    if (isPlainObj(obj[k])) {
+      return {
+        [k]: true,
+        ...flattenObjHash(obj[k]),
+      };
+    }
+    return { [k]: true };
+  });
+};
