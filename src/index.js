@@ -86,7 +86,6 @@ const assembleSegments = (logArgs, levelName, config, includeColor) => {
 let bc = null;
 
 const createLogger = (rawInputConfig = defaultConfig) => {
-  console.log("cwwwreatiyyng");
   const globalConfig = mergeConfigs(defaultConfig, rawInputConfig);
   const makeLevelLogger = (levelName, intVal) => {
     // only show BroadcastChannel browser compat warning once
