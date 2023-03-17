@@ -6,11 +6,11 @@
 
 - useful (overrideable) defaults, no config required.
 - < 2kb minified + gzipped. no external dependencies.
-- `sink` options for easily sending log output to different destinations. specify a POST endpoint url or arbitrary JS function to receive the log output. 
+- `sink` options for sending log output to different destinations. Specify a POST endpoint URL or arbitrary JS function to receive the log output. 
+- typical log level options (debug, info, error, etc.) with configurable message prefixes and colors.
 - `aggregateTabs` option to combine log output from multiple tabs open to the same page.
-- typical logging level options, with configurable message prefixes and colors
-- include arbitrary metadata/tags with output
-- share/extend configuration across multiple logger instances via `createSublogger`
+- include arbitrary metadata for a given logger's output.
+- share and extend configuration across multiple logger instances via `createSublogger`
 
 ### Installation
 
@@ -34,17 +34,17 @@ log.error("error");
 log.warn("warning");
 log.info("some info", "more content");
 
-//override parent/default config property
+//replace default formatting
 log.debug(
   { prefix: { format: (parts: string[]) => `<${parts.join("__")}>:` } },
   "a debug message"
 );
 
 // send log output to an HTTP endpoint, along with additional metadata
-// (configurable globally or per-log)
+// (configurable globally for all messages from this logger, or for just a single log call)
 log.critical(
   {
-    sink: { endpoint: "https://httpbin.org/post" },
+    sink: { endpoint: "https://error-reporting-service.com" },
     metadata: { tags: ["bad-errors"], userAgent: navigator.userAgent },
   },
   "This browser doesn't work"
@@ -129,11 +129,11 @@ const defaultConfig = {
     clientTimestamp: Date.now(),
   }),
 
-  //disable the "merging" behavior for all config properties;
-  //replace the parent config completely
+  //disable the "merging" behavior for config properties on child subloggers;
+  //instead replace the parent config completely.
   replaceParentConfig: false,
 
-  //disable the "merging" behavior for metadata properties
+  //disable the "merging" behavior for metadata properties.
   replaceParentMetadata: false,
 
   //function for filtering logs based on message content/metadata
@@ -147,7 +147,7 @@ const defaultConfig = {
 ### Extending Log Configuration
 
 Each individual log call (e.g., `log.info()`) can also optionally be
-passed these config options. These will be merged with the values from the parent createLogger, with values from the individual log call taking precedence in the case of them both specifying a particular key.
+passed all of the same config options. These will be merged with the values from the parent createLogger, with values from the individual log call taking precedence in the case of them both specifying a particular key.
 
 ```js
 log.debug(
