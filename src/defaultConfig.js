@@ -80,9 +80,6 @@ export const defaultConfig = {
 
   //function for filtering logs based on message content/metadata
   filter: ({ message: { asSegments, asString }, metadata }) => true,
-
-  //if true, wrap log calls in a 0ms setTimeout() to avoid blocking event loop
-  async: false,
 };
 
 export const isPlainConfigObj = (() => {
