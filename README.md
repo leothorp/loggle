@@ -5,7 +5,7 @@
 ### Features
 
 - useful (overrideable) defaults, no config required.
-- 1.4kb minified + gzipped. no external dependencies.
+- < 2kb minified + gzipped. no external dependencies.
 - `sink` options for easily sending log output to different destinations. specify a POST endpoint url or arbitrary JS function to receive the log output. 
 - `aggregateTabs` option to combine log output from multiple tabs open to the same page.
 - typical logging level options, with configurable message prefixes and colors
